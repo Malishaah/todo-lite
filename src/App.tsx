@@ -1,35 +1,36 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useEffect, useState } from 'react'
+import TodoForm from './components/TodoForm'
+import TodoList from './components/TodoList'
+import type { Todo } from './types'
+import { loadTodos, saveTodos } from './lib/storage'
 
-function App() {
-  const [count, setCount] = useState(0)
+export default function App() {
+  const [todos, setTodos] = useState<Todo[]>([])
+  const [filter, setFilter] = useState<'all'|'open'|'done'>('all')
+
+  useEffect(() => { setTodos(loadTodos()) }, [])
+  useEffect(() => { saveTodos(todos) }, [todos])
+
+  function add(text: string) {
+    setTodos(prev => [{ id: crypto.randomUUID(), text, done: false }, ...prev])
+  }
+  function toggle(id: string) {
+    setTodos(prev => prev.map(t => t.id === id ? { ...t, done: !t.done } : t))
+  }
+  function del(id: string) {
+    setTodos(prev => prev.filter(t => t.id !== id))
+  }
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <div>
+      <h1>Todo Lite</h1>
+      <TodoForm onAdd={add} />
+      <div role="group" aria-label="filter">
+        <button onClick={() => setFilter('all')} aria-pressed={filter==='all'}>Alla</button>
+        <button onClick={() => setFilter('open')} aria-pressed={filter==='open'}>Öppna</button>
+        <button onClick={() => setFilter('done')} aria-pressed={filter==='done'}>Klart</button>
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+      <TodoList todos={todos} onToggle={toggle} onDelete={del} filter={filter} />
+    </div>
   )
 }
-
-export default App
